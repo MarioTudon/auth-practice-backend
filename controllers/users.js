@@ -8,9 +8,12 @@ export class UsersController {
     get = async (req, res) => {
         try {
             const response = await this.usersModel.get()
+            console.log(response)
             return res.json({
                 message: 'user_obtained',
-                body: response
+                body: {
+                    username: response.user
+                }
             })
         }
         catch (err) {
@@ -44,7 +47,9 @@ export class UsersController {
             }
             return res.json({
                 message: `the_user_has_been_created`,
-                body: newUser
+                body: {
+                    username: newUser.username
+                }
             })
         }
         catch (err) {
@@ -56,11 +61,30 @@ export class UsersController {
     }
 
     login = async (req, res) => {
+        const result = validateUser(req.body)
+        if (!result.success) {
+            return res.status(400).json({
+                message: 'bad_request',
+                details: result.error.issues.map(issue => ({
+                    field: issue.path.join('.'),
+                    message: issue.message
+                }))
+            })
+        }
+
         try {
-            const newUser = await this.usersModel.login(req.body)
+            const user = await this.usersModel.login(result.data)
+            if (user.error) {
+                return res.status(user.status).json({
+                    message: user.message,
+                    details: user.details
+                })
+            }
             return res.json({
-                message: `the_user_has_been_created`,
-                body: newUser
+                message: `the_user_has_logged_in`,
+                body: {
+                    username: user.username
+                }
             })
         }
         catch (err) {
