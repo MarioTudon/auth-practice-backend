@@ -1,6 +1,7 @@
 import sqlite3 from 'sqlite3'
 import bcrypt from 'bcrypt'
 import { SALT_ROUNDS } from '../config.js'
+import jwt from 'jsonwebtoken'
 
 const usersDB = new sqlite3.Database('./models/users.db')
 
@@ -72,13 +73,23 @@ export class UsersModel {
             })
 
             if (!user) {
-                return { error: true, status: 401, message: 'not_found', details: 'The username has not been found' }
+                return {
+                    error: true,
+                    status: 404,
+                    message: 'not_found',
+                    details: 'The username has not been found'
+                }
             }
 
             const isValid = await bcrypt.compare(userData.password, user.password)
 
             if (!isValid) {
-                return { error: true, status: 401, message: 'unauthorized', details: 'The password is incorrect' }
+                return {
+                    error: true,
+                    status: 401,
+                    message: 'unauthorized',
+                    details: 'The password is incorrect'
+                }
             }
 
             return user

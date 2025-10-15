@@ -1,4 +1,6 @@
-import { validateUser, validatePartialUser } from "../schemas/users.js"
+import { SECRET_JWT_KEY } from '../config.js'
+import { validateUser, validatePartialUser } from '../schemas/users.js'
+import jwt from 'jsonwebtoken'
 
 export class UsersController {
     constructor({ usersModel }) {
@@ -80,10 +82,20 @@ export class UsersController {
                     details: user.details
                 })
             }
+            const token = jwt.sign(
+                {
+                    id: user.id,
+                    username: user.username
+                },
+                SECRET_JWT_KEY,
+                {
+                    expiresIn: '1h'
+                })
             return res.json({
                 message: `the_user_has_logged_in`,
                 body: {
-                    username: user.username
+                    username: user.username,
+                    token
                 }
             })
         }
