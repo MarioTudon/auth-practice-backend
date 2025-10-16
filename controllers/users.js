@@ -1,4 +1,4 @@
-import { SECRET_JWT_KEY } from '../config.js'
+import { ACCESS_JWT_KEY } from '../config.js'
 import { validateUser, validatePartialUser } from '../schemas/users.js'
 import jwt from 'jsonwebtoken'
 
@@ -11,7 +11,6 @@ export class UsersController {
         try {
             const username = req.body.username
             const response = await this.usersModel.get(username)
-            console.log(response)
             return res.json({
                 message: 'user_obtained',
                 body: response
@@ -90,7 +89,7 @@ export class UsersController {
                 {
                     expiresIn: '1h'
                 })
-            return res.cookie('access_token',token,{
+            return res.cookie('access_token', token, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict',

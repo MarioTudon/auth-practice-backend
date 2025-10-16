@@ -1,8 +1,5 @@
-import sqlite3 from 'sqlite3'
 import bcrypt from 'bcrypt'
-import { SALT_ROUNDS } from '../config.js'
-
-const usersDB = new sqlite3.Database('./models/users.db')
+import { SALT_ROUNDS, usersDB} from '../config.js'
 
 export class UsersModel {
 
