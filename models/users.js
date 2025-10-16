@@ -6,9 +6,13 @@ const usersDB = new sqlite3.Database('./models/users.db')
 
 export class UsersModel {
 
-    static async get() {
+    static async get(username) {
         return new Promise((resolve, reject) => {
-            usersDB.all('SELECT * FROM users', (err, rows) => {
+            usersDB.all(`
+                SELECT m.message
+                FROM messages1 m
+                JOIN users u ON m.user_id = u.id
+                WHERE u.username = ?;`, [username], (err, rows) => {
                 if (err) reject(err)
                 else resolve(rows)
             })
@@ -35,7 +39,7 @@ export class UsersModel {
             }
 
             const id = crypto.randomUUID()
-            const hashedPassword = await bcrypt.hash(userData.password, SALT_ROUNDS)
+            const hashedPassword = await bcrypt.hash(userData.password, parseInt(SALT_ROUNDS))
 
             await new Promise((resolve, reject) => {
                 usersDB.run(

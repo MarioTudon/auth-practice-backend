@@ -9,17 +9,16 @@ export class UsersController {
 
     get = async (req, res) => {
         try {
-            const response = await this.usersModel.get()
+            const username = req.body.username
+            const response = await this.usersModel.get(username)
             console.log(response)
             return res.json({
                 message: 'user_obtained',
-                body: {
-                    username: response.user
-                }
+                body: response
             })
         }
         catch (err) {
-            return resstatus(500).json({
+            return res.status(500).json({
                 message: 'internal_error',
                 details: err.message
             })
@@ -93,14 +92,13 @@ export class UsersController {
                 })
             return res.cookie('access_token',token,{
                 httpOnly: true,
-                secure: false,
-                sameSite: 'None',
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
                 maxAge: 1000 * 60 * 60
             }).json({
                 message: `the_user_has_logged_in`,
                 body: {
-                    username: user.username,
-                    token
+                    username: user.username
                 }
             })
         }
