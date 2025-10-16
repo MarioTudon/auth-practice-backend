@@ -19,7 +19,7 @@ export class UsersController {
             })
         }
         catch (err) {
-            return res.status(500).json({
+            return resstatus(500).json({
                 message: 'internal_error',
                 details: err.message
             })
@@ -91,7 +91,12 @@ export class UsersController {
                 {
                     expiresIn: '1h'
                 })
-            return res.json({
+            return res.cookie('access_token',token,{
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 1000 * 60 * 60
+            }).json({
                 message: `the_user_has_logged_in`,
                 body: {
                     username: user.username,

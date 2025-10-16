@@ -1,7 +1,6 @@
 import sqlite3 from 'sqlite3'
 import bcrypt from 'bcrypt'
 import { SALT_ROUNDS } from '../config.js'
-import jwt from 'jsonwebtoken'
 
 const usersDB = new sqlite3.Database('./models/users.db')
 

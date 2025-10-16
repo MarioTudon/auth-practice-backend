@@ -1,5 +1,8 @@
+import dotenv from 'dotenv'
+dotenv.config()
+
 export const {
-    PORT = 3000,
-    SALT_ROUNDS = 10,
-    SECRET_JWT_KEY = 'this-is-my-secret-key-for-development-env'
+    PORT = process.env.PORT,
+    SALT_ROUNDS = process.env.SALT_ROUNDS,
+    SECRET_JWT_KEY = process.env.SECRET_JWT_KEY
 } = process.env

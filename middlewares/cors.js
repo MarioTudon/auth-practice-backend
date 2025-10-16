@@ -1,11 +1,12 @@
 import cors from 'cors'
 
 const ACCEPTED_ORIGINS = [
-  '*'
+  'http://127.0.0.1:5500'
 ]
 
 export const corsMiddleware = ({ acceptedOrigins = ACCEPTED_ORIGINS } = {}) => cors({
   origin: (origin, callback) => {
+    console.log(acceptedOrigins)
     if (acceptedOrigins.includes(origin)) {
       return callback(null, true)
     }
@@ -15,5 +16,6 @@ export const corsMiddleware = ({ acceptedOrigins = ACCEPTED_ORIGINS } = {}) => c
     }
 
     return callback(new Error('Not allowed by CORS'))
-  }
+  },
+  credentials: true
 })
