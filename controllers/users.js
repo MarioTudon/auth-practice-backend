@@ -93,8 +93,8 @@ export class UsersController {
                 })
             return res.cookie('access_token',token,{
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
+                secure: false,
+                sameSite: 'None',
                 maxAge: 1000 * 60 * 60
             }).json({
                 message: `the_user_has_logged_in`,

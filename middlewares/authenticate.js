@@ -1,5 +1,5 @@
 export const authenticateMiddleware = (req, res, next) => {
-    const token = req.cookies.access_token;
+    const token = req.cookies.access_token
     if (!token) return res.sendStatus(401)
 
     jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
