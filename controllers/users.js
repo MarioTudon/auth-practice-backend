@@ -1,6 +1,7 @@
-import { ACCESS_JWT_KEY } from '../config.js'
+import { ACCESS_JWT_KEY, REFRESH_JWT_KEY } from '../config.js'
 import { validateUser, validatePartialUser } from '../schemas/users.js'
 import jwt from 'jsonwebtoken'
+import { usersDB } from '../config.js'
 
 export class UsersController {
     constructor({ usersModel }) {
@@ -17,19 +18,21 @@ export class UsersController {
             })
         }
         catch (err) {
-            return res.status(500).json({
-                message: 'internal_error',
+            return next({
+                status: 500,
+                error: 'internal_error',
                 details: err.message
             })
         }
     }
 
-    register = async (req, res) => {
+    register = async (req, res, next) => {
         const result = validateUser(req.body)
 
         if (!result.success) {
-            return res.status(400).json({
-                message: 'bad_request',
+            return next({
+                status: 400,
+                error: 'bad_request',
                 details: result.error.issues.map(issue => ({
                     field: issue.path.join('.'),
                     message: issue.message
@@ -39,9 +42,10 @@ export class UsersController {
 
         try {
             const newUser = await this.usersModel.register(result.data)
-            if (newUser.error) {
-                return res.status(newUser.status).json({
-                    message: newUser.message,
+            if ('error' in newUser) {
+                return next({
+                    status: newUser.status,
+                    error: newUser.error,
                     details: newUser.details
                 })
             }
@@ -53,18 +57,21 @@ export class UsersController {
             })
         }
         catch (err) {
-            return res.status(500).json({
-                message: 'internal_error',
+            return next({
+                status: 500,
+                error: 'internal_error',
                 details: err.message
             })
         }
     }
 
-    login = async (req, res) => {
+    login = async (req, res, next) => {
         const result = validateUser(req.body)
+
         if (!result.success) {
-            return res.status(400).json({
-                message: 'bad_request',
+            return next({
+                status: 400,
+                error: 'bad_request',
                 details: result.error.issues.map(issue => ({
                     field: issue.path.join('.'),
                     message: issue.message
@@ -74,22 +81,47 @@ export class UsersController {
 
         try {
             const user = await this.usersModel.login(result.data)
-            if (user.error) {
-                return res.status(user.status).json({
-                    message: user.message,
+            if ('error' in user) {
+                return next({
+                    status: user.status,
+                    error: user.error,
                     details: user.details
                 })
             }
-            const token = jwt.sign(
-                {
-                    id: user.id,
-                    username: user.username
-                },
-                SECRET_JWT_KEY,
-                {
-                    expiresIn: '1h'
+
+            const accessToken = jwt.sign({
+                id: user.id,
+                username: user.username
+            }, ACCESS_JWT_KEY, {
+                expiresIn: '15m'
+            })
+
+            const refreshToken = jwt.sign({
+                id: user.id,
+                username: user.username
+            }, REFRESH_JWT_KEY, {
+                expiresIn: '7d'
+            })
+
+            const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+            await new Promise((resolve, reject) => {
+                usersDB.run(`
+                INSERT INTO refresh_tokens (token, user_id, revoked, expires_at)
+                VALUES(?, ?, ?, ?)`, [refreshToken, user.id, false, expiresAt], (err) => {
+                    if (err) {
+                        return reject(err)
+                    }
+                    resolve()
                 })
-            return res.cookie('access_token', token, {
+            })
+
+            return res.cookie('access_token', accessToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 1000 * 60 * 60
+            }).cookie('refresh_token', refreshToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict',
@@ -102,8 +134,9 @@ export class UsersController {
             })
         }
         catch (err) {
-            return res.status(500).json({
-                message: 'internal_error',
+            return next({
+                status: 500,
+                error: 'internal_error',
                 details: err.message
             })
         }

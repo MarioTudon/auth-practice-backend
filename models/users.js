@@ -28,9 +28,8 @@ export class UsersModel {
 
             if (user) {
                 return {
-                    error: true,
-                    status: 400,
-                    message: 'bad_request',
+                    status: 409,
+                    error: 'conflict',
                     details: 'The username already exists'
                 }
             }
@@ -74,9 +73,8 @@ export class UsersModel {
 
             if (!user) {
                 return {
-                    error: true,
                     status: 404,
-                    message: 'not_found',
+                    error: 'not_found',
                     details: 'The username has not been found'
                 }
             }

@@ -5,23 +5,27 @@ import { usersDB } from '../config.js'
 export const verifyAccessToken = (req, res, next) => {
     const token = req.cookies.access_token
     if (!token) return next({
-        status: 404,
-        message: 'forbidden',
+        status: 403,
+        error: 'forbidden',
         details: 'Access not authorizated'
     })
 
     jwt.verify(token, ACCESS_JWT_KEY, (err, body) => {
-        if (err) return res.sendStatus(403)
+        if (err) return next({
+            status: 401,
+            error: 'unauthorized',
+            details: 'Password and/or username are invalid'
+        })
         req.body = body
         next()
     })
 }
 
-/*export const verifyRefreshToken = async (req, res, next) => {
+export const verifyRefreshToken = async (req, res, next) => {
     const token = req.cookies.refresh_token
-
-    if (!token) return res.status(403).send({
-        message: 'forbidden',
+    if (!token) return next({
+        status: 403,
+        error: 'forbidden',
         details: 'Access not authorizated'
     })
 
@@ -32,19 +36,20 @@ export const verifyAccessToken = (req, res, next) => {
             usersDB.run(`
                 SELECT * FROM refresh_tokens
                 WHERE token = ? AND revoked = false`, [token], (err) => {
-                if (err) return res.sendStatus(500).send({
-                    message: 'internal_error',
-                    error: err
-                })
+                if (err) return reject(err)
             })
         })
 
-        if (!storedToken) return res.status(403).json({ message: 'Refresh token invalid or revoked' });
+        if (!storedToken) return next({
+            status: 401,
+            error: 'unauthorized',
+            details: 'Refresh token invalid or revoked'
+        })
 
-        req.userId = payload.userId;
-        req.oldToken = token;
-        next();
+        req.userId = payload.userId
+        req.oldToken = token
+        next()
     } catch (err) {
-        return res.status(403).json({ message: 'Invalid refresh token' });
+        next(err)
     }
-}*/
+}
