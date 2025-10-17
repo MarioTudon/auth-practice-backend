@@ -103,7 +103,8 @@ export class UsersController {
                 expiresIn: '7d'
             })
 
-            const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+            const decoded = jwt.decode(refreshToken)
+            const expiresAt = new Date(decoded.exp * 1000).toISOString();
 
             await new Promise((resolve, reject) => {
                 usersDB.run(`
