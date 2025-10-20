@@ -6,3 +6,8 @@ db.run(`DELETE FROM refresh_tokens
 `, (err) => {
   if (err) console.log(err)
 })
+
+db.run(`DELETE FROM users
+`, (err) => {
+  if (err) console.log(err)
+})

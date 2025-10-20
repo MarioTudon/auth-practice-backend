@@ -6,10 +6,9 @@ export class UsersModel {
     static async get(username) {
         return new Promise((resolve, reject) => {
             usersDB.all(`
-                SELECT m.message
-                FROM messages1 m
-                JOIN users u ON m.user_id = u.id
-                WHERE u.username = ?;`, [username], (err, rows) => {
+                SELECT username
+                FROM users
+                WHERE username = ?;`, [username], (err, rows) => {
                 if (err) reject(err)
                 else resolve(rows)
             })

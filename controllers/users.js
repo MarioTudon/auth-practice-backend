@@ -8,13 +8,13 @@ export class UsersController {
         this.usersModel = usersModel
     }
 
-    get = async (req, res) => {
+    get = async (req, res, next) => {
         try {
             const username = req.body.username
             const response = await this.usersModel.get(username)
             return res.json({
-                message: 'user_obtained',
-                body: response
+                message: 'authenticated',
+                username: username
             })
         }
         catch (err) {
@@ -129,16 +129,12 @@ export class UsersController {
                 maxAge: 1000 * 60 * 60
             }).json({
                 message: `the_user_has_logged_in`,
-                body: {
-                    username: user.username
-                }
+                username: user.username
             })
         }
         catch (err) {
+            console.log(err)
             return next({
-                status: 500,
-                error: 'internal_error',
-                details: err.message
             })
         }
     }
