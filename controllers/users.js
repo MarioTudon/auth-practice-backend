@@ -26,18 +26,20 @@ export class UsersController {
         }
     }
 
-    refresh = async (req, res, next) => {
-        const newAccessToken = jwt.sign(
-            { username: user.username },
-            process.env.JWT_SECRET,
-            { expiresIn: '15m' }
-        )
+    refresh = async (req, res) => {
+        const id = req.body.id
+        const username = req.body.username
+        const newAccessToken = jwt.sign({
+            id: id,
+            username: username
+        }, ACCESS_JWT_KEY, {
+            expiresIn: '15m'
+        })
 
-        res.cookie('accessToken', newAccessToken, {
+        return res.cookie('access_token', newAccessToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 1000 * 60 * 60
+            sameSite: 'strict'
         }).json({
             message: `the_token_has_been_refreshed`
         })
@@ -110,7 +112,7 @@ export class UsersController {
                 id: user.id,
                 username: user.username
             }, ACCESS_JWT_KEY, {
-                expiresIn: '15s'
+                expiresIn: '15m'
             })
 
             const refreshToken = jwt.sign({
@@ -137,13 +139,11 @@ export class UsersController {
             return res.cookie('access_token', accessToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
-                maxAge: 1000 * 60 * 60
+                sameSite: 'strict'
             }).cookie('refresh_token', refreshToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
-                maxAge: 1000 * 60 * 60
+                sameSite: 'strict'
             }).json({
                 message: `the_user_has_logged_in`,
                 username: user.username

@@ -29,27 +29,28 @@ export const verifyRefreshToken = async (req, res, next) => {
         details: 'Access not authorizated'
     })
 
-    try {
-        const payload = jwt.verify(token, REFRESH_TOKEN_SECRET);
-
-        const [storedToken] = await new Promise((resolve, reject) => {
-            usersDB.run(`
-                SELECT * FROM refresh_tokens
-                WHERE token = ? AND revoked = false`, [token], (err) => {
-                if (err) return reject(err)
-            })
+    const storedToken = await new Promise((resolve, reject) => {
+        usersDB.get(`
+        SELECT * FROM refresh_tokens
+        WHERE token = ? AND revoked = false`, [token], (err, row) => {
+            if (err) return reject(err)
+            resolve(row)
         })
+    })
 
-        if (!storedToken) return next({
+    if (!storedToken) return next({
+        status: 401,
+        error: 'unauthorized',
+        details: 'Refresh token invalid or revoked'
+    })
+
+    jwt.verify(token, REFRESH_JWT_KEY, (err, body) => {
+        if (err) return next({
             status: 401,
             error: 'unauthorized',
-            details: 'Refresh token invalid or revoked'
+            details: 'Password and/or username are invalid'
         })
-
-        req.userId = payload.userId
-        req.oldToken = token
+        req.body = body
         next()
-    } catch (err) {
-        next(err)
-    }
+    })
 }
