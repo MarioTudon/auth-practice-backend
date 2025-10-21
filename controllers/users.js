@@ -26,6 +26,23 @@ export class UsersController {
         }
     }
 
+    refresh = async (req, res, next) => {
+        const newAccessToken = jwt.sign(
+            { username: user.username },
+            process.env.JWT_SECRET,
+            { expiresIn: '15m' }
+        )
+
+        res.cookie('accessToken', newAccessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 1000 * 60 * 60
+        }).json({
+            message: `the_token_has_been_refreshed`
+        })
+    }
+
     register = async (req, res, next) => {
         const result = validateUser(req.body)
 
@@ -93,7 +110,7 @@ export class UsersController {
                 id: user.id,
                 username: user.username
             }, ACCESS_JWT_KEY, {
-                expiresIn: '15m'
+                expiresIn: '15s'
             })
 
             const refreshToken = jwt.sign({
