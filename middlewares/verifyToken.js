@@ -31,8 +31,8 @@ export const verifyRefreshToken = async (req, res, next) => {
 
     const storedToken = await new Promise((resolve, reject) => {
         usersDB.get(`
-        SELECT * FROM refresh_tokens
-        WHERE token = ? AND revoked = false`, [token], (err, row) => {
+        SELECT * FROM refreshTokens
+        WHERE token = ? AND isValid = true`, [token], (err, row) => {
             if (err) return reject(err)
             resolve(row)
         })

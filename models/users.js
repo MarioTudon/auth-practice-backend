@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt'
-import { SALT_ROUNDS, usersDB} from '../config.js'
+import { SALT_ROUNDS, usersDB } from '../config.js'
 
 export class UsersModel {
 
@@ -90,6 +90,22 @@ export class UsersModel {
             }
 
             return user
+        } catch (err) {
+            throw err
+        }
+    }
+
+    static async logout(refreshToken) {
+        try {
+            await new Promise((resolve, reject) => {
+                usersDB.run(`UPDATE refreshTokens
+                SET isValid = false
+                WHERE token = ?
+                `, [refreshToken], (err) => {
+                    if (err) reject(err)
+                    resolve()
+                })
+            })
         } catch (err) {
             throw err
         }

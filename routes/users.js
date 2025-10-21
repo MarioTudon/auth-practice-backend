@@ -11,6 +11,7 @@ export const createUsersRouter = ({ usersModel }) => {
   usersRouter.get('/refresh', verifyRefreshToken, goalsController.refresh)
   usersRouter.post('/register', goalsController.register)
   usersRouter.post('/login', goalsController.login)
+  usersRouter.get('/logout', goalsController.logout)
 
   return usersRouter
 }

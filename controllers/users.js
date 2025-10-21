@@ -123,12 +123,12 @@ export class UsersController {
             })
 
             const decoded = jwt.decode(refreshToken)
-            const expiresAt = new Date(decoded.exp * 1000).toISOString();
+            const createdAt = new Date(decoded.iat * 1000).toISOString();
 
             await new Promise((resolve, reject) => {
                 usersDB.run(`
-                INSERT INTO refresh_tokens (token, user_id, revoked, expires_at)
-                VALUES(?, ?, ?, ?)`, [refreshToken, user.id, false, expiresAt], (err) => {
+                INSERT INTO refreshTokens (token, userId)
+                VALUES(?, ?)`, [refreshToken, user.id], (err) => {
                     if (err) {
                         return reject(err)
                     }
@@ -154,5 +154,13 @@ export class UsersController {
             return next({
             })
         }
+    }
+
+    logout = async (req, res, next) => {
+        const refreshToken = req.cookies.refresh_token
+        this.usersModel.logout(refreshToken)
+        return res.clearCookie('access_token').clearCookie('refresh_token').json({
+            message: 'se ha cerrado la sesión'
+        })
     }
 }
