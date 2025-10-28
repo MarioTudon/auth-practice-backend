@@ -64,7 +64,6 @@ export class UsersModel {
             const user = await new Promise((resolve, reject) => {
                 usersDB.get('SELECT * FROM users WHERE username = ?', [normalizedUsername], (err, row) => {
                     if (err) reject(new customErrors.AppError(err.message, 'internal error', 500, 'something went wrong, please try again later'))
-                    console.log(row)
                     resolve(row)
                 })
             })
