@@ -2,6 +2,7 @@ import { ACCESS_JWT_KEY, REFRESH_JWT_KEY } from '../config.js'
 import { validateUser, validatePartialUser } from '../schemas/users.js'
 import jwt from 'jsonwebtoken'
 import { usersDB } from '../config.js'
+import customErrors from '../error/customErrors.js'
 
 export class UsersController {
     constructor({ usersModel }) {
@@ -18,11 +19,7 @@ export class UsersController {
             })
         }
         catch (err) {
-            return next({
-                status: 500,
-                error: 'internal_error',
-                details: err.message
-            })
+            return next(err)
         }
     }
 
@@ -49,25 +46,14 @@ export class UsersController {
         const result = validateUser(req.body)
 
         if (!result.success) {
-            return next({
-                status: 400,
-                error: 'bad_request',
-                details: result.error.issues.map(issue => ({
-                    field: issue.path.join('.'),
-                    message: issue.message
-                }))
-            })
+            return next(new customErrors.AppError('data validation failed', 'bad request', 400, result.error.issues.map(issue => ({
+                field: issue.path.join('.'),
+                message: issue.message.replaceAll("_", " ")
+            }))))
         }
 
         try {
             const newUser = await this.usersModel.register(result.data)
-            if ('error' in newUser) {
-                return next({
-                    status: newUser.status,
-                    error: newUser.error,
-                    details: newUser.details
-                })
-            }
             return res.json({
                 message: `the_user_has_been_created`,
                 body: {
@@ -76,37 +62,13 @@ export class UsersController {
             })
         }
         catch (err) {
-            return next({
-                status: 500,
-                error: 'internal_error',
-                details: err.message
-            })
+            return next(err)
         }
     }
 
     login = async (req, res, next) => {
-        const result = validateUser(req.body)
-
-        if (!result.success) {
-            return next({
-                status: 400,
-                error: 'bad_request',
-                details: result.error.issues.map(issue => ({
-                    field: issue.path.join('.'),
-                    message: issue.message
-                }))
-            })
-        }
-
         try {
-            const user = await this.usersModel.login(result.data)
-            if ('error' in user) {
-                return next({
-                    status: user.status,
-                    error: user.error,
-                    details: user.details
-                })
-            }
+            const user = await this.usersModel.login(req.body)
 
             const accessToken = jwt.sign({
                 id: user.id,
@@ -121,9 +83,6 @@ export class UsersController {
             }, REFRESH_JWT_KEY, {
                 expiresIn: '7d'
             })
-
-            const decoded = jwt.decode(refreshToken)
-            const createdAt = new Date(decoded.iat * 1000).toISOString();
 
             await new Promise((resolve, reject) => {
                 usersDB.run(`
@@ -145,22 +104,25 @@ export class UsersController {
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict'
             }).json({
-                message: `the_user_has_logged_in`,
+                message: `the user has logged in`,
                 username: user.username
             })
         }
         catch (err) {
-            console.log(err)
-            return next({
-            })
+            return next(err)
         }
     }
 
     logout = async (req, res, next) => {
         const refreshToken = req.cookies.refresh_token
-        this.usersModel.logout(refreshToken)
-        return res.clearCookie('access_token').clearCookie('refresh_token').json({
-            message: 'se ha cerrado la sesión'
-        })
+        try {
+            this.usersModel.logout(refreshToken)
+            return res.clearCookie('access_token').clearCookie('refresh_token').json({
+                message: 'you have been logged out'
+            })
+        }
+        catch (err) {
+            return next(err)
+        }
     }
 }
